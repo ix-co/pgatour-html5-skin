@@ -18,13 +18,13 @@ var DiscoveryMixin = {
       }
     },
 
-    getRelatedVideosByUrl: function (params, videoId, setDiscoveryVideos) {
+    getRelatedVideosByUrl: function (params, videoId, setDiscoveryVideos, doNotFetchVideosFromCategory) {
         var relatedUrl = '//api.ooyala.com/v2/discover/similar/assets/';
         var responseNumber = 0;
         var urls = [
           relatedUrl + videoId + '?' + DiscoveryMixin._generateParamString(params)
         ];
-        if (params.videoCategoriesUrl) {
+        if (params.videoCategoriesUrl && !doNotFetchVideosFromCategory) {
           urls.push(params.videoCategoriesUrl);
         }
         var allData = {};
@@ -59,7 +59,9 @@ var DiscoveryMixin = {
       });
       var randomIndex = Math.floor(Math.random() * withoutLastPlayedVideos.length);
       var randomVideo = withoutLastPlayedVideos[randomIndex];
-      return DiscoveryMixin.toOoyalaVideo(randomVideo);
+      var ooyalaVideo = DiscoveryMixin.toOoyalaVideo(randomVideo);
+      ooyalaVideo._fetchVideosFromCategory = true;
+      return ooyalaVideo;
     },
 
     getNonPlayedVideos: function (relatedVideos, params, videosFromCategory) {

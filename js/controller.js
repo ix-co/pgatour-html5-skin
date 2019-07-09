@@ -1886,7 +1886,8 @@ OO.plugin('Html5Skin', function(OO, _, $, W) {
       ) {
           this.state.playerParam.playedVideos = this.state.playedVideos;
           this.state.playerParam.responsiveId = this.skin.state.responsiveId;
-          DiscoveryMixin.getRelatedVideosByUrl(this.state.playerParam, this.state.assetId, this.setDiscoveryVideos.bind(this));
+          DiscoveryMixin.getRelatedVideosByUrl(this.state.playerParam, this.state.assetId, this.setDiscoveryVideos.bind(this), this.state.doNotFetchVideosFromCategory);
+          this.state.doNotFetchVideosFromCategory = false;
       } else if (relatedVideos.videos) {
         this.setDiscoveryVideos(relatedVideos.videos);
       }
@@ -2454,6 +2455,9 @@ OO.plugin('Html5Skin', function(OO, _, $, W) {
       if (this.state.playerParam.discoveryRedirect && selectedContentData.clickedVideo.hostedAtURL && window.pgatour) {
         pgatour.setWindowLocation(selectedContentData.clickedVideo.hostedAtURL);
         return;
+      }
+      if (!selectedContentData.clickedVideo._fetchVideosFromCategory) {
+        this.state.doNotFetchVideosFromCategory = true;
       }
       this.state.pluginsElement.removeClass('oo-overlay-blur');
       if (isAutoUpNext) {
