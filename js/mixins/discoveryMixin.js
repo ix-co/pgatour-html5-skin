@@ -22,9 +22,11 @@ var DiscoveryMixin = {
         var relatedUrl = '//api.ooyala.com/v2/discover/similar/assets/';
         var responseNumber = 0;
         var urls = [
-          relatedUrl + videoId + '?' + DiscoveryMixin._generateParamString(params),
-          params.videoCategoriesUrl
+          relatedUrl + videoId + '?' + DiscoveryMixin._generateParamString(params)
         ];
+        if (params.videoCategoriesUrl) {
+          urls.push(params.videoCategoriesUrl);
+        }
         var allData = {};
         for (var i = 0; i < urls.length; i++) {
           DiscoveryMixin.makeAjaxCall(urls[i], function(data, url) {
