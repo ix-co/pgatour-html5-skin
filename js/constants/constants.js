@@ -277,7 +277,8 @@ var CONSTANTS = {
   IMAGE_URLS: {
     NATIVE: "http://pgaondemand-a.akamaihd.net",
     POSTER_CLOUDINARY: "http://pga-tour-res.cloudinary.com/image/upload/f_auto,q_50,w_1920/v1/ooyala-video",
-    THUMB_CLOUDINARY: "http://pga-tour-res.cloudinary.com/image/upload/c_fill,f_auto,q_80,w_110,h_80/v1/ooyala-video"
+    THUMB_CLOUDINARY: "http://pga-tour-res.cloudinary.com/image/upload/c_fill,f_auto,q_80,w_110,h_80/v1/ooyala-video",
+    DISCOVERY_IMAGE_PLACEHOLDER: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII="
   },
 
   UI: {

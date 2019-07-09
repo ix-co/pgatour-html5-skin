@@ -1,28 +1,79 @@
+var CONSTANTS = require('../constants/constants');
+
 var DiscoveryMixin = {
-    getRelatedVideosByUrl: function (params, videoId, setDiscoveryVideos) {
-        var xhr = new XMLHttpRequest();
+    makeAjaxCall: function(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.send();
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState != 4) {
+          return;
+        }
+        if (xhr.status != 200) {
+          console.log(xhr.status + ': ' + xhr.statusText);
+          callback(null, url);
+        } else {
+          callback(xhr.response, url);
+        }
+      }
+    },
+
+    getRelatedVideosByUrl: function (params, videoId, setDiscoveryVideos, doNotFetchVideosFromCategory) {
         var relatedUrl = '//api.ooyala.com/v2/discover/similar/assets/';
-        var url = relatedUrl + videoId + '?' + DiscoveryMixin._generateParamString(params);
-        xhr.open('GET', url, true);
-        xhr.send();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState != 4) return;
-            if (xhr.status != 200) {
-                console.log(xhr.status + ': ' + xhr.statusText);
-            } else {
-                var relatedVideos = JSON.parse(xhr.response);
-                var results = DiscoveryMixin.getNonPlayedVideos(relatedVideos.results, params);
-                DiscoveryMixin.getFullVideoData(params.videoDetailsUrl, results, setDiscoveryVideos);
+        var responseNumber = 0;
+        var urls = [
+          relatedUrl + videoId + '?' + DiscoveryMixin._generateParamString(params)
+        ];
+        if (params.videoCategoriesUrl && !doNotFetchVideosFromCategory) {
+          urls.push(params.videoCategoriesUrl);
+        }
+        var allData = {};
+        for (var i = 0; i < urls.length; i++) {
+          DiscoveryMixin.makeAjaxCall(urls[i], function(data, url) {
+            allData[url] = data;
+            responseNumber++;
+            if (responseNumber === urls.length) {
+              var relatedVideos = JSON.parse(allData[urls[0]]);
+              var videosFromCategory = allData[urls[1]] && JSON.parse(allData[urls[1]]).items || [];
+              var results = DiscoveryMixin.getNonPlayedVideos(relatedVideos.results, params, videosFromCategory);
+              DiscoveryMixin.getFullVideoData(params.videoDetailsUrl, results, setDiscoveryVideos);
             }
+          });
         }
     },
 
-    getNonPlayedVideos: function (relatedVideos, params) {
+    toOoyalaVideo: function(fullVideo) {
+      return {
+        name: fullVideo.title,
+        franchise: fullVideo.franchise,
+        embed_code: fullVideo.videoId,
+        image: fullVideo.image,
+        duration: fullVideo.duration * 1000
+      };
+    },
+
+    getRandomVideoFromSameCategoryAndFranchise: function(playedVideos, relatedVideos) {
+      var lastPlayedVideo = playedVideos && playedVideos.length ? playedVideos[playedVideos.length - 1] : null;
+      var withoutLastPlayedVideos = relatedVideos.filter(function(relatedVideo) {
+        return relatedVideo.videoId !== lastPlayedVideo;
+      });
+      var randomIndex = Math.floor(Math.random() * withoutLastPlayedVideos.length);
+      var randomVideo = withoutLastPlayedVideos[randomIndex];
+      var ooyalaVideo = DiscoveryMixin.toOoyalaVideo(randomVideo);
+      ooyalaVideo._fetchVideosFromCategory = true;
+      return ooyalaVideo;
+    },
+
+    getNonPlayedVideos: function (relatedVideos, params, videosFromCategory) {
         var limit = params.responsiveId === 'xs' || params.responsiveId === 'sm' ? 1 : 3;
-        if (relatedVideos.length <= limit) {
-            return DiscoveryMixin.shuffleArray(relatedVideos);
+        var videosFromSameCategoryAndFranchise = [];
+        if (videosFromCategory.length) {
+          videosFromSameCategoryAndFranchise.push(DiscoveryMixin.getRandomVideoFromSameCategoryAndFranchise(params.playedVideos, videosFromCategory));
         }
-        var results = [];
+        if (relatedVideos.length + videosFromSameCategoryAndFranchise.length <= limit) {
+          return videosFromSameCategoryAndFranchise.concat(DiscoveryMixin.shuffleArray(relatedVideos));
+        }
+        var results = [].concat(videosFromSameCategoryAndFranchise);
         var deleted = [];
         for (var i = 0; i < relatedVideos.length; i++) {
             if (params.playedVideos.indexOf(relatedVideos[i]['embed_code']) === -1) {
@@ -65,6 +116,7 @@ var DiscoveryMixin = {
                     results[j]['name'] = fullVideosData[i]['title'];
                     results[j]['franchise'] = fullVideosData[i]['franchise'];
                     results[j]['image'] = fullVideosData[i]['image'];
+                    results[j]['preview_image_url'] = results[j]['preview_image_url'] || CONSTANTS.IMAGE_URLS.DISCOVERY_IMAGE_PLACEHOLDER;
                     break;
                 }
             }
