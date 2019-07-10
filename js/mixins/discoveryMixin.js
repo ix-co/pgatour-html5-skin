@@ -69,6 +69,7 @@ var DiscoveryMixin = {
         var videosFromSameCategoryAndFranchise = [];
         if (videosFromCategory.length) {
           videosFromSameCategoryAndFranchise.push(DiscoveryMixin.getRandomVideoFromSameCategoryAndFranchise(params.playedVideos, videosFromCategory));
+          relatedVideos = DiscoveryMixin.excludeCategoryVideosFromOoyalaResponse(relatedVideos, videosFromSameCategoryAndFranchise);
         }
         if (relatedVideos.length + videosFromSameCategoryAndFranchise.length <= limit) {
           return videosFromSameCategoryAndFranchise.concat(DiscoveryMixin.shuffleArray(relatedVideos));
@@ -106,6 +107,15 @@ var DiscoveryMixin = {
                 setDiscoveryVideos(results);
             }
         }
+    },
+
+    excludeCategoryVideosFromOoyalaResponse: function(relatedVideos, videosFromSameCategory) {
+      var videoIdsFromSameCategory = videosFromSameCategory.map(function(video) {
+        return video.embed_code
+      });
+      return relatedVideos.filter(function(relatedVideo) {
+        return videoIdsFromSameCategory.indexOf(relatedVideo.embed_code) === -1;
+      });
     },
 
     mergeRelatedVideos: function (videos, fullVideosData) {
