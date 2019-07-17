@@ -57,6 +57,9 @@ var DiscoveryMixin = {
       var withoutLastPlayedVideos = relatedVideos.filter(function(relatedVideo) {
         return relatedVideo.videoId !== lastPlayedVideo;
       });
+      if (!withoutLastPlayedVideos.length) {
+        return null;
+      }
       var randomIndex = Math.floor(Math.random() * withoutLastPlayedVideos.length);
       var randomVideo = withoutLastPlayedVideos[randomIndex];
       var ooyalaVideo = DiscoveryMixin.toOoyalaVideo(randomVideo);
@@ -68,7 +71,10 @@ var DiscoveryMixin = {
         var limit = params.responsiveId === 'xs' || params.responsiveId === 'sm' ? 1 : 3;
         var videosFromSameCategoryAndFranchise = [];
         if (videosFromCategory.length) {
-          videosFromSameCategoryAndFranchise.push(DiscoveryMixin.getRandomVideoFromSameCategoryAndFranchise(params.playedVideos, videosFromCategory));
+          var randomVideoFromCategory = DiscoveryMixin.getRandomVideoFromSameCategoryAndFranchise(params.playedVideos, videosFromCategory);
+          if (randomVideoFromCategory) {
+            videosFromSameCategoryAndFranchise.push(randomVideoFromCategory);
+          }
           relatedVideos = DiscoveryMixin.excludeCategoryVideosFromOoyalaResponse(relatedVideos, videosFromSameCategoryAndFranchise);
         }
         if (relatedVideos.length + videosFromSameCategoryAndFranchise.length <= limit) {
